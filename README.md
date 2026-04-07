@@ -11,13 +11,29 @@ DNS-01 challenges bypass inbound HTTP/HTTPS entirely. Required when the edge
 firewall geoblocks the ACME CA's validator IPs (e.g. IPFire country blocking
 dropping Let's Encrypt validators).
 
+## Reproducible build
+
+Both Caddy and the plugin are pinned to exact versions via Dockerfile `ARG`s:
+
+```dockerfile
+ARG CADDY_VERSION=2.11.2
+ARG CADDY_GODADDY_VERSION=v1.2.0
+```
+
+No floating tags, no "whatever upstream shipped today". The image built from
+any given commit uses exactly those versions. Upgrades happen through
+[Renovate](https://docs.renovatebot.com/) PRs (see `renovate.json`) that
+bump the ARGs — review, merge, new image published.
+
 ## Tags
 
-| Tag                | Meaning                                   |
-| ------------------ | ----------------------------------------- |
-| `latest`           | Latest build from `main`                  |
-| `vX.Y.Z`, `vX.Y`   | Semver tag pushed to the repo             |
-| `sha-<short>`      | Specific commit                           |
+| Tag                                | Meaning                                                  |
+| ---------------------------------- | -------------------------------------------------------- |
+| `latest`                           | Latest build from `main`                                 |
+| `<caddy_version>`                  | E.g. `2.11.2` — the Caddy version baked into the image   |
+| `<caddy_version>-godaddy-<plugin>` | E.g. `2.11.2-godaddy-v1.2.0` — full version bundle       |
+| `vX.Y.Z`, `vX.Y`                   | Repo semver tag                                          |
+| `sha-<short>`                      | Specific commit                                          |
 
 ## Usage
 
@@ -75,6 +91,22 @@ git push origin v0.1.0
 
 The GitHub Actions workflow builds multi-arch (`linux/amd64`, `linux/arm64`)
 and pushes to Docker Hub.
+
+## Upgrading Caddy or the plugin
+
+1. Renovate opens a PR bumping `ARG CADDY_VERSION` or
+   `ARG CADDY_GODADDY_VERSION` in the Dockerfile.
+2. Review the upstream changelog linked in the PR.
+3. Merge. The build workflow publishes a new `:latest` plus a new
+   `:<caddy_version>` and `:<caddy_version>-godaddy-<plugin_version>` tag.
+
+To bump manually without waiting for Renovate:
+
+```bash
+# edit Dockerfile ARGs, then
+git commit -am "Bump Caddy to 2.12.0"
+git push
+```
 
 ## License
 

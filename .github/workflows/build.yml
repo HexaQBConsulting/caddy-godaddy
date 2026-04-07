@@ -18,6 +18,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Read pinned versions from Dockerfile
+        id: versions
+        run: |
+          caddy_version="$(grep -E '^ARG CADDY_VERSION=' Dockerfile | cut -d= -f2)"
+          plugin_version="$(grep -E '^ARG CADDY_GODADDY_VERSION=' Dockerfile | cut -d= -f2)"
+          echo "caddy_version=${caddy_version}" >> "$GITHUB_OUTPUT"
+          echo "plugin_version=${plugin_version}" >> "$GITHUB_OUTPUT"
+          echo "bundle_tag=${caddy_version}-godaddy-${plugin_version}" >> "$GITHUB_OUTPUT"
+          echo "Caddy:  v${caddy_version}"
+          echo "Plugin: ${plugin_version}"
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -41,6 +52,11 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=sha,prefix=sha-,format=short
             type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=${{ steps.versions.outputs.caddy_version }},enable={{is_default_branch}}
+            type=raw,value=${{ steps.versions.outputs.bundle_tag }},enable={{is_default_branch}}
+          labels: |
+            com.hexaqb.caddy.version=${{ steps.versions.outputs.caddy_version }}
+            com.hexaqb.caddy-dns-godaddy.version=${{ steps.versions.outputs.plugin_version }}
 
       - name: Build and push
         uses: docker/build-push-action@v6
@@ -48,6 +64,9 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
+          pull: true
+          provenance: true
+          sbom: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
