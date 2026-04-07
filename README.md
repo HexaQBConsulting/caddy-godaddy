@@ -75,3 +75,9 @@ git push origin v0.1.0
 
 The GitHub Actions workflow builds multi-arch (`linux/amd64`, `linux/arm64`)
 and pushes to Docker Hub.
+
+## License
+
+Apache License 2.0 — see [LICENSE](LICENSE).
+
+Copyright © 2026 HexaQB Consulting.
